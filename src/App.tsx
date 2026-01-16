@@ -14,7 +14,7 @@ function imageCandidates(category: string, name: string): ImgCandidate[] {
   const raw = name.trim();
   const rawHyph = raw.replace(/\s+/g, "-");
   const variants = Array.from(new Set([base, rawHyph, raw]));
-  const exts = [".jpg", ".jpeg", ".png", ".webp"];
+  const exts = [".webp", ".jpg", ".jpeg", ".png"];
   const list: ImgCandidate[] = [];
   for (const v of variants) {
     for (const e of exts) {
