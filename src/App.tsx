@@ -1,4 +1,21 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+
+// =============================================
+// INTERFACES (Agregado para TypeScript)
+// =============================================
+export interface Product {
+  id: number;
+  nombre: string;
+  categoria: string;
+  cantidad: number;
+  precioCuotas: number;
+  precioContado: number;
+  modelo: string | null;
+  imagen: string | null;
+  destacado: boolean;
+  nuevo: boolean;
+  qty?: number;
+}
 
 // =============================================
 // CONFIGURACIÓN
@@ -23,7 +40,7 @@ const SHEET_TABS = [
   { nombre: "OTROS",       gid: "581617004",   tieneCasio: false },
 ];
 
-const CATEGORY_ICONS = {
+const CATEGORY_ICONS: Record<string, string> = {
   TODOS: "◈", JBL: "🎧", CELULARES: "📱", "RELOJ SMART": "⌚",
   CASIO: "⌚", APPLE: "🍎", XIAOMI: "⚡", VAPER: "💨", OTROS: "✦",
 };
@@ -31,14 +48,14 @@ const CATEGORY_ICONS = {
 // =============================================
 // UTILIDADES
 // =============================================
-const fmt = (n) =>
+const fmt = (n: number) =>
   new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
     maximumFractionDigits: 0,
   }).format(n);
 
-const driveToImg = (url) => {
+const driveToImg = (url: string | null) => {
   if (!url) return null;
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w500`;
@@ -46,24 +63,24 @@ const driveToImg = (url) => {
   return null;
 };
 
-const parsePrice = (str) => {
+const parsePrice = (str: string) => {
   if (!str) return 0;
   let clean = str.replace(/[$\s]/g, "");
   clean = clean.replace(/,/g, "").split(".")[0];
   return parseInt(clean) || 0;
 };
 
-const getStockStatus = (cantidad) => {
+const getStockStatus = (cantidad: number) => {
   if (cantidad === 0) return { label: "Sin stock", color: "#FF3B30", dot: "#FF3B30" };
   if (cantidad <= 2)  return { label: `Stock: ${cantidad}`, color: "#FFD600", dot: "#FFD600" };
   return { label: `Stock: ${cantidad}`, color: "#36ECDF", dot: "#4CAF50" };
 };
 
-const parseCSV = (text) => {
+const parseCSV = (text: string) => {
   const lines = text.trim().split("\n");
   const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
   return lines.slice(1).map((line) => {
-    const values = [];
+    const values: string[] = [];
     let cur = "", inQ = false;
     for (const ch of line) {
       if (ch === '"') { inQ = !inQ; }
@@ -71,7 +88,7 @@ const parseCSV = (text) => {
       else cur += ch;
     }
     values.push(cur.trim());
-    const row = {};
+    const row: Record<string, string> = {};
     headers.forEach((h, i) => { row[h] = (values[i] || "").replace(/^"|"$/g, ""); });
     return row;
   });
@@ -352,41 +369,41 @@ const STYLES = `
 // APP
 // =============================================
 export default function STImportados() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("TODOS");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("default");
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState<Product[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<NodeJS.Timeout | number | null>(null);
 
   // Navbar search + dropdown
   const [navSearch, setNavSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [highlightedIdx, setHighlightedIdx] = useState(-1);
-  const searchRef = useRef(null);
-  const logoRef = useRef(null);
-  const catalogRef = useRef(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+  const catalogRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const style = document.createElement("style");
     style.innerHTML = STYLES;
     document.head.appendChild(style);
-    return () => document.head.removeChild(style);
+    return () => { document.head.removeChild(style); }; // Corrección importante acá
   }, []);
 
   // Cerrar dropdown/sugerencias al hacer clic afuera
   useEffect(() => {
-    const handler = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
         setHighlightedIdx(-1);
       }
-      if (logoRef.current && !logoRef.current.contains(e.target)) {
+      if (logoRef.current && !logoRef.current.contains(e.target as Node)) {
         setCatDropdownOpen(false);
       }
     };
@@ -397,7 +414,7 @@ export default function STImportados() {
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
-      const allProducts = [];
+      const allProducts: Product[] = [];
       let idCounter = 1;
       for (const tab of SHEET_TABS) {
         try {
@@ -414,7 +431,7 @@ export default function STImportados() {
             const imagenKey = Object.keys(row).find((k) => k.toUpperCase().includes("IMAGEN"));
             const destacadoKey = Object.keys(row).find((k) => k.toUpperCase().includes("DESTACADO"));
             const nuevoKey = Object.keys(row).find((k) => k.toUpperCase().includes("NUEVO"));
-            const activo = (row[activoKey] || "").toUpperCase() === "SI";
+            const activo = (row[activoKey || ""] || "").toUpperCase() === "SI";
             if (!nombre || !activo) continue;
 
             allProducts.push({
@@ -422,8 +439,8 @@ export default function STImportados() {
               nombre,
               categoria: tab.nombre,
               cantidad,
-              precioCuotas: parsePrice(row[cuotasKey]),
-              precioContado: parsePrice(row[contadoKey]),
+              precioCuotas: parsePrice(row[cuotasKey || ""]),
+              precioContado: parsePrice(row[contadoKey || ""]),
               modelo: tab.tieneCasio && modeloKey ? (row[modeloKey] || "").trim() : null,
               imagen: imagenKey ? driveToImg((row[imagenKey] || "").trim()) : null,
               destacado: destacadoKey ? (row[destacadoKey] || "").toUpperCase() === "SI" : false,
@@ -440,9 +457,9 @@ export default function STImportados() {
     fetchAll();
   }, []);
 
-  const showToast = (msg) => {
+  const showToast = (msg: string) => {
     setToast(msg);
-    clearTimeout(toastTimer.current);
+    if (toastTimer.current) clearTimeout(toastTimer.current as number);
     toastTimer.current = setTimeout(() => setToast(null), 2200);
   };
 
@@ -473,44 +490,44 @@ export default function STImportados() {
     return list;
   }, [products, activeCategory, search, sortBy]);
 
-  const cartCount = cart.reduce((a, i) => a + i.qty, 0);
-  const cartTotal = cart.reduce((a, i) => a + i.precioContado * i.qty, 0);
-  const cartTotalCuotas = cart.reduce((a, i) => a + i.precioCuotas * i.qty, 0);
+  const cartCount = cart.reduce((a, i) => a + (i.qty || 1), 0);
+  const cartTotal = cart.reduce((a, i) => a + i.precioContado * (i.qty || 1), 0);
+  const cartTotalCuotas = cart.reduce((a, i) => a + i.precioCuotas * (i.qty || 1), 0);
 
-  const addToCart = (product) => {
+  const addToCart = (product: Product) => {
     setCart((prev) => {
       const exists = prev.find((i) => i.id === product.id);
-      if (exists) return prev.map((i) => i.id === product.id ? { ...i, qty: Math.min(i.qty + 1, product.cantidad) } : i);
+      if (exists) return prev.map((i) => i.id === product.id ? { ...i, qty: Math.min((i.qty || 1) + 1, product.cantidad) } : i);
       return [...prev, { ...product, qty: 1 }];
     });
     showToast(`${product.nombre} agregado`);
   };
 
-  const updateQty = (id, delta) => {
-    setCart((prev) => prev.map((i) => i.id === id ? { ...i, qty: i.qty + delta } : i).filter((i) => i.qty > 0));
+  const updateQty = (id: number, delta: number) => {
+    setCart((prev) => prev.map((i) => i.id === id ? { ...i, qty: (i.qty || 1) + delta } : i).filter((i) => (i.qty || 0) > 0));
   };
 
   const handleCheckout = () => {
     if (!cart.length) return;
-    const lines = cart.map((i) => `• ${i.nombre} (x${i.qty}) — ${fmt(i.precioContado * i.qty)} contado`);
+    const lines = cart.map((i) => `• ${i.nombre} (x${i.qty}) — ${fmt(i.precioContado * (i.qty || 1))} contado`);
     const msg = ["🛒 *Pedido ST Importados*", "", ...lines, "", `*Total contado/transf:* ${fmt(cartTotal)}`, `*Total en cuotas:* ${fmt(cartTotalCuotas)}`, "", "¿Podés confirmar disponibilidad?"].join("\n");
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  const wspProduct = (p) => {
+  const wspProduct = (p: Product) => {
     const msg = `Hola! Me interesa *${p.nombre}* (${p.categoria}).\nPrecio contado: ${fmt(p.precioContado)}\n¿Está disponible?`;
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   };
 
   // Ir a una categoría: filtra y scrollea al catálogo
-  const goToCategory = (cat) => {
+  const goToCategory = (cat: string) => {
     setActiveCategory(cat);
     setCatDropdownOpen(false);
     setTimeout(() => catalogRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   // Click en sugerencia: abre modal
-  const selectSuggestion = (p) => {
+  const selectSuggestion = (p: Product) => {
     setNavSearch("");
     setShowSuggestions(false);
     setHighlightedIdx(-1);
@@ -518,7 +535,7 @@ export default function STImportados() {
   };
 
   // Teclado en el buscador (flechas, enter, escape)
-  const handleSearchKeyDown = (e) => {
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!showSuggestions) setShowSuggestions(true);
@@ -543,7 +560,7 @@ export default function STImportados() {
     }
   };
 
-  const ProductCard = ({ product }) => {
+  const ProductCard = ({ product }: { product: Product }) => {
     const stock = getStockStatus(product.cantidad);
     const inCart = cart.find((i) => i.id === product.id);
     return (
