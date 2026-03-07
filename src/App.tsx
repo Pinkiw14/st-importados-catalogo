@@ -378,7 +378,7 @@ export default function STImportados() {
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const toastTimer = useRef<NodeJS.Timeout | number | null>(null);
+  const toastTimer = useRef<number | null>(null);
 
   // Navbar search + dropdown
   const [navSearch, setNavSearch] = useState("");
@@ -458,10 +458,10 @@ export default function STImportados() {
   }, []);
 
   const showToast = (msg: string) => {
-    setToast(msg);
-    if (toastTimer.current) clearTimeout(toastTimer.current as number);
-    toastTimer.current = setTimeout(() => setToast(null), 2200);
-  };
+  setToast(msg);
+  if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+  toastTimer.current = window.setTimeout(() => setToast(null), 2200);
+};
 
   const categories = useMemo(() => {
     const cats = [...new Set(products.map((p) => p.categoria))];
