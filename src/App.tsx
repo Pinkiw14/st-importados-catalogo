@@ -38,7 +38,6 @@ const fmt = (n) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-// Convierte link de Drive compartido a link directo de imagen
 const driveToImg = (url) => {
   if (!url) return null;
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -50,7 +49,6 @@ const driveToImg = (url) => {
 const parsePrice = (str) => {
   if (!str) return 0;
   let clean = str.replace(/[$\s]/g, "");
-  // Google Sheets exporta 22,300.00 — coma=miles, punto=decimal
   clean = clean.replace(/,/g, "").split(".")[0];
   return parseInt(clean) || 0;
 };
@@ -95,9 +93,43 @@ const STYLES = `
   .app { min-height: 100vh; }
 
   /* NAVBAR */
-  .navbar { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 10px 28px; background: rgba(1,32,63,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
-  .navbar-logo { height: 44px; object-fit: contain; }
-  .cart-btn { position: relative; background: var(--navy-light); border: 1px solid var(--border); color: var(--white); padding: 10px 18px; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+  .navbar { position: sticky; top: 0; z-index: 100; display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 16px; padding: 10px 20px; background: rgba(1,32,63,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+
+  /* LOGO + DROPDOWN CATEGORÍAS */
+  .navbar-logo-wrap { position: relative; }
+  .navbar-logo-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+  .navbar-logo-btn:hover { background: rgba(54,236,223,0.08); }
+  .navbar-logo { height: 36px; object-fit: contain; display: block; }
+  .cat-dropdown { position: absolute; top: calc(100% + 10px); left: 0; background: #021830; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; z-index: 300; min-width: 210px; box-shadow: 0 16px 48px rgba(0,0,0,0.5); animation: dropIn 0.18s ease; }
+  .cat-dropdown-item { display: flex; align-items: center; gap: 10px; padding: 11px 16px; cursor: pointer; font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; color: var(--gray); transition: all 0.15s; border-left: 2px solid transparent; white-space: nowrap; }
+  .cat-dropdown-item:hover { background: rgba(54,236,223,0.07); color: var(--white); border-left-color: var(--cyan); }
+  .cat-dropdown-item.active { color: var(--cyan); border-left-color: var(--cyan); background: rgba(54,236,223,0.05); }
+  .cat-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* SEARCH CENTRADO */
+  .navbar-search-wrap { position: relative; width: 100%; max-width: 560px; margin: 0 auto; }
+  .navbar-search-input { width: 100%; background: rgba(10,45,82,0.85); border: 1px solid var(--border); color: var(--white); padding: 10px 42px 10px 18px; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: all 0.2s; }
+  .navbar-search-input:focus { border-color: rgba(54,236,223,0.5); background: rgba(10,45,82,1); box-shadow: 0 0 0 3px rgba(54,236,223,0.07); }
+  .navbar-search-input::placeholder { color: var(--gray); }
+  .navbar-search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--gray); font-size: 14px; pointer-events: none; }
+  .navbar-search-clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--gray); font-size: 18px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.15s; display: flex; align-items: center; }
+  .navbar-search-clear:hover { color: var(--white); }
+
+  /* SUGERENCIAS */
+  .search-suggestions { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #021830; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; z-index: 300; box-shadow: 0 16px 48px rgba(0,0,0,0.5); animation: dropIn 0.15s ease; }
+  .search-suggestion { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; transition: background 0.15s; }
+  .search-suggestion:hover, .search-suggestion.highlighted { background: rgba(54,236,223,0.07); }
+  .search-suggestion-img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--navy-light); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .search-suggestion-img img { width: 100%; height: 100%; object-fit: cover; }
+  .search-suggestion-info { flex: 1; min-width: 0; }
+  .search-suggestion-name { font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 700; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+  .search-suggestion-cat { font-size: 11px; color: var(--cyan); opacity: 0.7; font-family: 'Oxanium', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+  .search-suggestion-price { font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 800; color: var(--cyan); flex-shrink: 0; }
+  .search-suggestions-footer { padding: 10px 16px; font-size: 12px; color: var(--gray); text-align: center; border-top: 1px solid var(--border); }
+  .search-no-results { padding: 20px 16px; text-align: center; color: var(--gray); font-size: 13px; }
+
+  /* CART BTN */
+  .cart-btn { position: relative; background: var(--navy-light); border: 1px solid var(--border); color: var(--white); padding: 10px 16px; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
   .cart-btn:hover { border-color: var(--cyan); color: var(--cyan); }
   .cart-badge { position: absolute; top: -6px; right: -6px; background: var(--magenta); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
@@ -120,10 +152,7 @@ const STYLES = `
   .catalog-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
   .catalog-title { font-family: 'Oxanium', sans-serif; font-size: 22px; font-weight: 700; }
   .catalog-count { font-size: 13px; color: var(--gray); margin-top: 4px; }
-  .catalog-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .search-input { background: var(--surface); border: 1px solid var(--border); color: var(--white); padding: 12px 16px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; width: 220px; outline: none; transition: border-color 0.2s; }
-  .search-input:focus { border-color: var(--cyan); }
-  .search-input::placeholder { color: var(--gray); }
+  .catalog-controls { display: flex; gap: 10px; align-items: center; }
   .sort-select { background: var(--surface); border: 1px solid var(--border); color: var(--white); padding: 12px 14px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; cursor: pointer; transition: border-color 0.2s; }
   .sort-select:focus { border-color: var(--cyan); }
 
@@ -174,10 +203,44 @@ const STYLES = `
   .btn-wsp { flex: 1; padding: 11px; border-radius: 9px; border: 1px solid rgba(37,211,102,0.3); background: rgba(37,211,102,0.08); color: #25D366; font-family: 'Oxanium', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .btn-wsp:hover { background: rgba(37,211,102,0.15); }
 
-  /* DESTACADOS */
-  .featured-section { padding: 0 28px 40px; max-width: 1200px; margin: 0 auto; }
+  /* BANNER NUEVOS */
+  .new-banner { padding: 0 28px 48px; max-width: 1200px; margin: 0 auto; }
   .section-title { font-family: 'Oxanium', sans-serif; font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .new-scroll { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; -ms-overflow-style: none; }
+  .new-scroll::-webkit-scrollbar { display: none; }
+  .new-card { flex-shrink: 0; width: 200px; background: var(--surface); border: 1px solid rgba(255,18,212,0.2); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.25s; }
+  .new-card:hover { border-color: rgba(255,18,212,0.5); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(255,18,212,0.1); }
+  .new-card-img { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #0a2d52, #01203F); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+  .new-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .new-card-body { padding: 12px; }
+  .new-card-name { font-family: 'Oxanium', sans-serif; font-size: 12px; font-weight: 700; color: var(--white); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .new-card-price { font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 800; color: var(--magenta); }
+
+  /* CASIO HERO */
+  .casio-hero { position: relative; margin: 0 0 48px; overflow: hidden; background: #000; }
+  .casio-hero-inner { max-width: 1200px; margin: 0 auto; padding: 60px 28px; display: flex; align-items: center; justify-content: space-between; gap: 40px; position: relative; z-index: 1; }
+  .casio-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 50%, rgba(54,236,223,0.06) 0%, transparent 60%), radial-gradient(ellipse at 30% 50%, rgba(255,18,212,0.04) 0%, transparent 60%); }
+  .casio-hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(54,236,223,0.3), transparent); }
+  .casio-hero-left { flex: 1; }
+  .casio-eyebrow { font-family: 'Oxanium', sans-serif; font-size: 11px; letter-spacing: 5px; color: var(--cyan); text-transform: uppercase; margin-bottom: 16px; opacity: 0.7; }
+  .casio-logo-text { font-family: 'Oxanium', sans-serif; font-size: clamp(42px, 6vw, 72px); font-weight: 800; color: var(--white); letter-spacing: 8px; text-transform: uppercase; line-height: 1; margin-bottom: 16px; }
+  .casio-logo-text span { color: var(--cyan); }
+  .casio-sub { font-size: 15px; color: var(--gray); max-width: 380px; line-height: 1.6; margin-bottom: 28px; }
+  .casio-btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px; background: var(--cyan); color: var(--navy); font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
+  .casio-btn:hover { background: #5ff5ea; transform: translateY(-1px); }
+  .casio-hero-right { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(380px, 45vw); }
+  .casio-mini-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(54,236,223,0.1); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+  .casio-mini-card:hover { border-color: rgba(54,236,223,0.3); background: rgba(54,236,223,0.04); }
+  .casio-mini-img { width: 100%; aspect-ratio: 1; background: #050f1a; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .casio-mini-img img { width: 100%; height: 100%; object-fit: cover; }
+  .casio-mini-placeholder { font-size: 28px; opacity: 0.2; }
+  .casio-mini-body { padding: 10px; }
+  .casio-mini-name { font-family: 'Oxanium', sans-serif; font-size: 11px; font-weight: 700; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+  .casio-mini-price { font-family: 'Oxanium', sans-serif; font-size: 12px; font-weight: 800; color: var(--cyan); }
+
+  /* DESTACADOS */
+  .featured-section { padding: 0 28px 48px; max-width: 1200px; margin: 0 auto; }
 
   /* CART */
   .cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 200; animation: fadeIn 0.2s ease; }
@@ -222,24 +285,63 @@ const STYLES = `
   .footer-link img { width: 16px; height: 16px; object-fit: contain; border-radius: 3px; }
   .footer-copy { font-size: 12px; color: rgba(139,165,192,0.4); letter-spacing: 1px; }
 
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 250; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.2s ease; }
+  .modal { background: #021830; border: 1px solid var(--border); border-radius: 20px; width: min(780px, 100%); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; animation: modalIn 0.25s ease; position: relative; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: var(--surface); border: 1px solid var(--border); color: var(--gray); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 1; }
+  .modal-close:hover { color: var(--white); border-color: var(--cyan); }
+  .modal-body { display: flex; gap: 0; }
+  .modal-img { width: 45%; flex-shrink: 0; background: linear-gradient(135deg, #0a2d52 0%, #01203F 100%); display: flex; align-items: center; justify-content: center; min-height: 340px; position: relative; border-radius: 20px 0 0 20px; overflow: hidden; }
+  .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+  .modal-img-placeholder { text-align: center; color: rgba(54,236,223,0.25); font-family: 'Oxanium', sans-serif; }
+  .modal-info { flex: 1; padding: 36px 32px; display: flex; flex-direction: column; }
+  .modal-category { font-family: 'Oxanium', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 3px; color: var(--cyan); text-transform: uppercase; margin-bottom: 10px; opacity: 0.7; }
+  .modal-name { font-family: 'Oxanium', sans-serif; font-size: 24px; font-weight: 800; color: var(--white); line-height: 1.2; margin-bottom: 8px; }
+  .modal-stock { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; background: rgba(1,32,63,0.8); border: 1px solid rgba(255,255,255,0.08); margin-bottom: 24px; width: fit-content; }
+  .modal-prices { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; }
+  .modal-price-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+  .modal-price-row:first-child { border-bottom: 1px solid var(--border); }
+  .modal-price-label { font-size: 13px; color: var(--gray); }
+  .modal-price-value { font-family: 'Oxanium', sans-serif; font-size: 20px; font-weight: 800; color: var(--white); }
+  .modal-price-value.big { color: var(--cyan); font-size: 28px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: auto; }
+  .modal-btn-cart { flex: 1; padding: 14px; border-radius: 10px; border: none; background: var(--cyan); color: var(--navy); font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .modal-btn-cart:hover:not(:disabled) { background: #5ff5ea; }
+  .modal-btn-cart:disabled { background: rgba(54,236,223,0.15); color: var(--gray); cursor: not-allowed; }
+  .modal-btn-wsp { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid rgba(37,211,102,0.3); background: rgba(37,211,102,0.08); color: #25D366; font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .modal-btn-wsp:hover { background: rgba(37,211,102,0.15); }
+  .modal-btn-casio { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--gray); font-family: 'Oxanium', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .modal-btn-casio:hover { border-color: var(--cyan); color: var(--cyan); }
+  .card-clickable { cursor: pointer; }
+
   /* TOAST */
   .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--navy-light); border: 1px solid var(--cyan); color: var(--white); padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500; z-index: 300; display: flex; align-items: center; gap: 8px; animation: toastIn 0.3s ease; white-space: nowrap; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
   @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  @media (max-width: 700px) {
+    .modal-body { flex-direction: column; }
+    .modal-img { width: 100%; min-height: 220px; border-radius: 20px 20px 0 0; }
+    .modal-info { padding: 24px 20px; }
+    .modal-name { font-size: 20px; }
+  }
   @media (max-width: 600px) {
-    .navbar { padding: 10px 16px; }
+    .navbar { padding: 8px 12px; gap: 10px; }
     .hero { padding: 50px 16px 40px; }
-    .catalog, .featured-section { padding-left: 16px; padding-right: 16px; }
+    .catalog, .featured-section, .new-banner { padding-left: 16px; padding-right: 16px; }
     .catalog-header { flex-direction: column; align-items: flex-start; }
-    .catalog-controls { width: 100%; }
-    .search-input { width: 100%; flex: 1; }
     .product-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
     .wsp-float { bottom: 16px; right: 16px; }
+    .casio-hero-right { display: none; }
+    .casio-hero-inner { padding: 40px 16px; }
+    .casio-logo-text { font-size: 36px; letter-spacing: 4px; }
+    .cart-btn span { display: none; }
   }
   @media (max-width: 400px) {
     .product-grid { grid-template-columns: 1fr; }
@@ -257,14 +359,39 @@ export default function STImportados() {
   const [sortBy, setSortBy] = useState("default");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+
+  // Navbar search + dropdown
+  const [navSearch, setNavSearch] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
+  const [highlightedIdx, setHighlightedIdx] = useState(-1);
+  const searchRef = useRef(null);
+  const logoRef = useRef(null);
+  const catalogRef = useRef(null);
 
   useEffect(() => {
     const style = document.createElement("style");
     style.innerHTML = STYLES;
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
+  }, []);
+
+  // Cerrar dropdown/sugerencias al hacer clic afuera
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+        setHighlightedIdx(-1);
+      }
+      if (logoRef.current && !logoRef.current.contains(e.target)) {
+        setCatDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   useEffect(() => {
@@ -287,7 +414,6 @@ export default function STImportados() {
             const imagenKey = Object.keys(row).find((k) => k.toUpperCase().includes("IMAGEN"));
             const destacadoKey = Object.keys(row).find((k) => k.toUpperCase().includes("DESTACADO"));
             const nuevoKey = Object.keys(row).find((k) => k.toUpperCase().includes("NUEVO"));
-
             const activo = (row[activoKey] || "").toUpperCase() === "SI";
             if (!nombre || !activo) continue;
 
@@ -326,6 +452,15 @@ export default function STImportados() {
   }, [products]);
 
   const featured = useMemo(() => products.filter((p) => p.destacado), [products]);
+  const nuevos = useMemo(() => products.filter((p) => p.nuevo), [products]);
+  const casioProducts = useMemo(() => products.filter((p) => p.categoria === "CASIO" && p.cantidad > 0).slice(0, 4), [products]);
+
+  // Sugerencias (máx 6, a partir de 2 caracteres)
+  const suggestions = useMemo(() => {
+    if (!navSearch.trim() || navSearch.length < 2) return [];
+    const q = navSearch.toLowerCase();
+    return products.filter((p) => p.nombre.toLowerCase().includes(q)).slice(0, 6);
+  }, [navSearch, products]);
 
   const filtered = useMemo(() => {
     let list = products.filter((p) => {
@@ -367,11 +502,52 @@ export default function STImportados() {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   };
 
+  // Ir a una categoría: filtra y scrollea al catálogo
+  const goToCategory = (cat) => {
+    setActiveCategory(cat);
+    setCatDropdownOpen(false);
+    setTimeout(() => catalogRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  };
+
+  // Click en sugerencia: abre modal
+  const selectSuggestion = (p) => {
+    setNavSearch("");
+    setShowSuggestions(false);
+    setHighlightedIdx(-1);
+    setSelectedProduct(p);
+  };
+
+  // Teclado en el buscador (flechas, enter, escape)
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!showSuggestions) setShowSuggestions(true);
+      setHighlightedIdx((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIdx((i) => Math.max(i - 1, -1));
+    } else if (e.key === "Enter") {
+      if (highlightedIdx >= 0 && suggestions[highlightedIdx]) {
+        selectSuggestion(suggestions[highlightedIdx]);
+      } else {
+        // Enter sin selección: filtrar catálogo
+        setSearch(navSearch);
+        setNavSearch("");
+        setShowSuggestions(false);
+        setHighlightedIdx(-1);
+        setTimeout(() => catalogRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setHighlightedIdx(-1);
+    }
+  };
+
   const ProductCard = ({ product }) => {
     const stock = getStockStatus(product.cantidad);
     const inCart = cart.find((i) => i.id === product.id);
     return (
-      <div className={`product-card ${product.cantidad === 0 ? "out-of-stock" : ""}`}>
+      <div className={`product-card card-clickable ${product.cantidad === 0 ? "out-of-stock" : ""}`} onClick={() => setSelectedProduct(product)}>
         <div className="product-image">
           {(product.nuevo || product.destacado) && (
             <div className="card-tags">
@@ -380,7 +556,7 @@ export default function STImportados() {
             </div>
           )}
           {product.imagen
-            ? <img src={product.imagen} alt={product.nombre} loading="lazy" />
+            ? <img src={product.imagen} alt={product.nombre} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0, transition: "transform 0.4s ease" }} />
             : <div className="product-image-placeholder"><div style={{ fontSize: 36, marginBottom: 8, opacity: 0.4 }}>{CATEGORY_ICONS[product.categoria] || "◆"}</div><div>{product.nombre}</div></div>
           }
           <div className="stock-badge">
@@ -397,11 +573,11 @@ export default function STImportados() {
               <span className="price-value">{fmt(product.precioCuotas)}</span>
             </div>
             <div className="price-row">
-              <span className="price-label">Contado / transf.</span>
+              <span className="price-label">Efectivo / transf. / débito</span>
               <span className="price-value highlight">{fmt(product.precioContado)}</span>
             </div>
           </div>
-          <div className="product-actions">
+          <div className="product-actions" onClick={(e) => e.stopPropagation()}>
             <button className="btn-cart" onClick={() => addToCart(product)} disabled={product.cantidad === 0}>
               {product.cantidad === 0 ? "Sin stock" : inCart ? "✓ Agregado" : "+ Carrito"}
             </button>
@@ -417,11 +593,94 @@ export default function STImportados() {
 
   return (
     <div className="app">
+
       {/* NAVBAR */}
       <nav className="navbar">
-        <img src="/assets/stimportados-logo.png" alt="ST Importados" className="navbar-logo" />
+
+        {/* LOGO → dropdown categorías */}
+        <div className="navbar-logo-wrap" ref={logoRef}>
+          <button
+            className="navbar-logo-btn"
+            onClick={() => setCatDropdownOpen((o) => !o)}
+            title="Ver categorías"
+          >
+            <img src="/assets/favicon.png" alt="ST Importados" className="navbar-logo" />
+          </button>
+
+          {catDropdownOpen && (
+            <div className="cat-dropdown">
+              {categories.map((cat, i) => (
+                <div key={cat}>
+                  {i === 1 && <div className="cat-dropdown-divider" />}
+                  <div
+                    className={`cat-dropdown-item ${activeCategory === cat ? "active" : ""}`}
+                    onClick={() => goToCategory(cat)}
+                  >
+                    <span>{CATEGORY_ICONS[cat] || "◆"}</span>
+                    <span>{cat}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* BÚSQUEDA TIPO GOOGLE */}
+        <div className="navbar-search-wrap" ref={searchRef}>
+          <input
+            className="navbar-search-input"
+            placeholder="Buscar productos..."
+            value={navSearch}
+            autoComplete="off"
+            onChange={(e) => {
+              setNavSearch(e.target.value);
+              setShowSuggestions(true);
+              setHighlightedIdx(-1);
+            }}
+            onFocus={() => { if (navSearch.length >= 2) setShowSuggestions(true); }}
+            onKeyDown={handleSearchKeyDown}
+          />
+          {navSearch
+            ? <button className="navbar-search-clear" onClick={() => { setNavSearch(""); setShowSuggestions(false); setSearch(""); }}>✕</button>
+            : <span className="navbar-search-icon">🔍</span>
+          }
+
+          {showSuggestions && navSearch.length >= 2 && (
+            <div className="search-suggestions">
+              {suggestions.length === 0 ? (
+                <div className="search-no-results">Sin resultados para "{navSearch}"</div>
+              ) : (
+                <>
+                  {suggestions.map((p, idx) => (
+                    <div
+                      key={p.id}
+                      className={`search-suggestion ${idx === highlightedIdx ? "highlighted" : ""}`}
+                      onMouseEnter={() => setHighlightedIdx(idx)}
+                      onClick={() => selectSuggestion(p)}
+                    >
+                      <div className="search-suggestion-img">
+                        {p.imagen
+                          ? <img src={p.imagen} alt={p.nombre} />
+                          : <span>{CATEGORY_ICONS[p.categoria] || "◆"}</span>
+                        }
+                      </div>
+                      <div className="search-suggestion-info">
+                        <div className="search-suggestion-name">{p.nombre}</div>
+                        <div className="search-suggestion-cat">{p.categoria}</div>
+                      </div>
+                      <div className="search-suggestion-price">{fmt(p.precioContado)}</div>
+                    </div>
+                  ))}
+                  <div className="search-suggestions-footer">↵ Enter para ver todos los resultados</div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* CARRITO */}
         <button className="cart-btn" onClick={() => setCartOpen(true)}>
-          🛒 Carrito
+          🛒 <span>Carrito</span>
           {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
         </button>
       </nav>
@@ -429,20 +688,79 @@ export default function STImportados() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-logo-wrap">
-          <img src="/assets/stimportados-logo.png" alt="ST Importados" className="hero-logo-img" />
+          <img src="/assets/IMAGOTIPO VA.png" alt="ST Importados" className="hero-logo-img" />
         </div>
         <p className="hero-eyebrow">Showroom · Electrónica · Relojes</p>
-        <p className="hero-sub">Stock disponible y precios actualizados. Tecnología y relojes de calidad, directo del showroom.</p>
+        <p className="hero-sub">Stock disponible y precios actualizados. Tecnología y relojes de calidad, directo del showroom.<br />📍 Comodoro Rivadavia</p>
         <div className="hero-pills">
           <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className="hero-pill">📍 <span>{SHOWROOM}</span></a>
           <div className="hero-pill">💳 <span>3 cuotas sin interés</span></div>
-          <div className="hero-pill">💸 <span>Descuento contado / transf.</span></div>
+          <div className="hero-pill">💸 <span>Descuento efectivo / transf / debito</span></div>
           <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hero-pill">
             <img src="/assets/instagram.png" alt="Instagram" />
             <span>{INSTAGRAM}</span>
           </a>
         </div>
       </section>
+
+      {/* BANNER NUEVOS INGRESOS */}
+      {!loading && nuevos.length > 0 && (
+        <div className="new-banner">
+          <div className="section-title">
+            <span className="tag tag-new">Nuevo</span> Nuevos ingresos
+          </div>
+          <div className="new-scroll">
+            {nuevos.map((p) => (
+              <div key={p.id} className="new-card" onClick={() => setSelectedProduct(p)}>
+                <div className="new-card-img">
+                  {p.imagen
+                    ? <img src={p.imagen} alt={p.nombre} loading="lazy" />
+                    : <div style={{ fontSize: 28, opacity: 0.2 }}>{CATEGORY_ICONS[p.categoria] || "◆"}</div>
+                  }
+                </div>
+                <div className="new-card-body">
+                  <div className="new-card-name">{p.nombre}</div>
+                  <div className="new-card-price">{fmt(p.precioContado)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CASIO HERO */}
+      {!loading && (
+        <div className="casio-hero">
+          <div className="casio-hero-inner">
+            <div className="casio-hero-left">
+              <div className="casio-eyebrow">Relojes Originales</div>
+              <div className="casio-logo-text">CA<span>SIO</span></div>
+              <p className="casio-sub">Marca tu propio ritmo. Encontra tu Casio original con la mejor financiación.</p>
+              <button className="casio-btn" onClick={() => goToCategory("CASIO")}>
+                Ver colección ⌚
+              </button>
+            </div>
+            {casioProducts.length > 0 && (
+              <div className="casio-hero-right">
+                {casioProducts.map((p) => (
+                  <div key={p.id} className="casio-mini-card" onClick={() => setSelectedProduct(p)}>
+                    <div className="casio-mini-img">
+                      {p.imagen
+                        ? <img src={p.imagen} alt={p.nombre} loading="lazy" />
+                        : <div className="casio-mini-placeholder">⌚</div>
+                      }
+                    </div>
+                    <div className="casio-mini-body">
+                      <div className="casio-mini-name">{p.nombre}</div>
+                      <div className="casio-mini-price">{fmt(p.precioContado)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* DESTACADOS */}
       {!loading && featured.length > 0 && (
@@ -455,14 +773,13 @@ export default function STImportados() {
       )}
 
       {/* CATÁLOGO */}
-      <section className="catalog">
+      <section className="catalog" ref={catalogRef}>
         <div className="catalog-header">
           <div>
             <div className="catalog-title">Catálogo</div>
             <div className="catalog-count">{loading ? "Cargando..." : `${filtered.length} productos`}</div>
           </div>
           <div className="catalog-controls">
-            <input className="search-input" placeholder="Buscar producto..." value={search} onChange={(e) => setSearch(e.target.value)} />
             <select className="sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="default">Ordenar</option>
               <option value="asc">Menor precio</option>
@@ -489,7 +806,7 @@ export default function STImportados() {
             {filtered.length === 0 && (
               <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>
                 <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>🔍</div>
-                No se encontraron productos para "{search}"
+                No se encontraron productos{search ? ` para "${search}"` : ""}
               </div>
             )}
           </div>
@@ -499,7 +816,7 @@ export default function STImportados() {
       {/* FOOTER */}
       <footer className="footer">
         <div className="footer-logo">
-          <img src="/assets/stimportados-logo.png" alt="ST Importados" />
+          <img src="/assets/favicon.png" alt="ST Importados" />
         </div>
         <div className="footer-links">
           <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="footer-link">💬 WhatsApp</a>
@@ -512,7 +829,9 @@ export default function STImportados() {
       </footer>
 
       {/* WSP FLOTANTE */}
-      <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="wsp-float" title="Consultanos por WhatsApp">💬</a>
+      <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="wsp-float" title="Consultanos por WhatsApp">
+        <img src="/assets/whatsapp.webp" alt="WhatsApp" style={{ width: 100, height: 100, objectFit: "contain" }} />
+      </a>
 
       {/* CART */}
       {cartOpen && (
@@ -565,6 +884,55 @@ export default function STImportados() {
       )}
 
       {toast && <div className="toast">✓ {toast}</div>}
+
+      {/* MODAL */}
+      {selectedProduct && (() => {
+        const p = selectedProduct;
+        const stock = getStockStatus(p.cantidad);
+        const inCart = cart.find((i) => i.id === p.id);
+        return (
+          <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setSelectedProduct(null)}>✕</button>
+              <div className="modal-body">
+                <div className="modal-img">
+                  {p.imagen
+                    ? <img src={p.imagen} alt={p.nombre} />
+                    : <div className="modal-img-placeholder"><div style={{ fontSize: 64, marginBottom: 12, opacity: 0.3 }}>{CATEGORY_ICONS[p.categoria] || "◆"}</div></div>
+                  }
+                </div>
+                <div className="modal-info">
+                  <div className="modal-category">{p.categoria}</div>
+                  <div className="modal-name">{p.nombre}</div>
+                  <div className="modal-stock">
+                    <div className="stock-dot" style={{ background: stock.dot }} />
+                    <span style={{ color: stock.color }}>{stock.label}</span>
+                  </div>
+                  <div className="modal-prices">
+                    <div className="modal-price-row">
+                      <span className="modal-price-label">3 cuotas sin interés</span>
+                      <span className="modal-price-value">{fmt(p.precioCuotas)}</span>
+                    </div>
+                    <div className="modal-price-row">
+                      <span className="modal-price-label">Efectivo / transf. / débito</span>
+                      <span className="modal-price-value big">{fmt(p.precioContado)}</span>
+                    </div>
+                  </div>
+                  <div className="modal-actions">
+                    <button className="modal-btn-cart" disabled={p.cantidad === 0} onClick={() => { addToCart(p); setSelectedProduct(null); }}>
+                      {p.cantidad === 0 ? "Sin stock" : inCart ? "✓ Agregado" : "+ Agregar al carrito"}
+                    </button>
+                    {p.modelo
+                      ? <a href={p.modelo} target="_blank" rel="noopener noreferrer" className="modal-btn-casio">🌐 Ver en Casio</a>
+                      : <a href={wspProduct(p)} target="_blank" rel="noopener noreferrer" className="modal-btn-wsp">💬 Consultar</a>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
