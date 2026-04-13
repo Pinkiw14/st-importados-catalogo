@@ -20,7 +20,7 @@ export interface Product {
 // =============================================
 // CONFIGURACIÓN
 // =============================================
-const WHATSAPP_NUMBER = "542975168695";
+const WHATSAPP_NUMBER = "542974084733";
 const SHOWROOM = "España 675";
 const INSTAGRAM = "@st.importados__";
 const MAPS_URL = "https://maps.app.goo.gl/jPuQbyq4tHw2eUcbA";
